@@ -1,5 +1,7 @@
 use std::process::Command;
 use crate::model::{KubectlVersionResponse, AWSRssFeedResponse, Item};
+use std::net::SocketAddr;
+use prometheus_exporter::prometheus::{register_gauge, Opts};
 
 mod model;
 
@@ -13,6 +15,56 @@ fn main() {
         println!("Server version {} is outdated", server_ver.to_string());
     }
 
+
+    let gauge = prometheus_exporter::prometheus::Gauge::new("eks_version_exporter_server_current_version", "Contains a semver compatible value").expect("Unable to create gauge");
+
+    let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
+    opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
+    opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
+    opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
+    opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
+    let mut server_current_version = register_gauge!(opts).expect("Unable to register gauge");
+
+    let addr_raw = "0.0.0.0:8080";
+    let addr : SocketAddr = addr_raw.parse().expect("Invalid SocketAddr");
+    let (req_recv, fin_send) = prometheus_exporter::PrometheusExporter::run_and_repeat(addr, std::time::Duration::from_secs(60));
+
+    loop {
+        req_recv.recv().unwrap();
+
+        println!("Updating metrics");
+        prometheus_exporter::prometheus::unregister(Box::new(server_current_version));
+
+        let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
+        opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
+        opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
+        opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
+        opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
+        server_current_version = register_gauge!(opts).expect("Unable to register gauge");
+
+        fin_send.send(prometheus_exporter::FinishedUpdate).unwrap();
+    }
+}
+
+fn current_time_epoch() -> u128 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let start = SystemTime::now();
+    let since_epoch = start.duration_since(UNIX_EPOCH).expect("Time went backwards");
+    since_epoch.as_millis()
+}
+
+fn current_time_date_string() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    use chrono::prelude::DateTime;
+    use chrono::Utc;
+
+    let start = SystemTime::now();
+    let since_epoch = start.duration_since(UNIX_EPOCH).expect("Time went backwards");
+    let d = UNIX_EPOCH + since_epoch;
+
+    let datetime = DateTime::<Utc>::from(d);
+    datetime.format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 fn get_latest_eks_k8s_version() -> semver::Version {
