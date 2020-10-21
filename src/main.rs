@@ -11,7 +11,8 @@ fn main() {
 
     let server_ver_raw = versions.server_version.as_ref().expect("No server version").git_version.as_ref().expect("No git version key");
     let server_ver_modified : &str = server_ver_raw.chars().next().map(|c| &server_ver_raw[c.len_utf8()..]).expect("Unable to remove first character");
-    let server_ver = semver::Version::parse(server_ver_modified).expect("Unable to parse git version into Version");
+    let mut server_ver = semver::Version::parse(server_ver_modified).expect("Unable to parse git version into Version");
+    server_ver = semver::Version::parse(format!("{}.{}.0", server_ver.major, server_ver.minor).as_str()).expect("Unable to parse git version into Version");
     println!("{:?}", server_ver);
 
     let version_items : Vec<Item> = res.channel.items
@@ -34,9 +35,11 @@ fn main() {
 
         let item_ver = semver::Version::parse(&modified).expect("Unable to parse item title into Version");
         println!("{:?}", item_ver);
+        if item_ver > server_ver {
+            println!("Server version {} is outdated", server_ver.to_string());
+        }
     }
 }
-
 
 fn get_k8s_version() -> Result<KubectlVersionResponse, ()> {
     let output = Command::new("sh")
