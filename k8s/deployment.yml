@@ -20,7 +20,6 @@ spec:
         project: selfservice
         department: devex
     spec:
-      priorityClassName: selfservice
       containers:
         - name: eks-version-exporter
           image: 579478677147.dkr.ecr.eu-central-1.amazonaws.com/ded/eks-version-exporter:$(Build.BuildId)
