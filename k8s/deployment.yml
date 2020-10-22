@@ -9,7 +9,7 @@ metadata:
     app: eks-version-exporter
     component: eks-version-exporter
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: eks-version-exporter
