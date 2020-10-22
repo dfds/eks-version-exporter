@@ -16,7 +16,7 @@ RUN ls
 RUN ls src
 RUN cat src/main.rs
 
-RUN cargo build --release --verbose --locked --offline
+RUN cargo build --release --offline
 
 # App assembling
 FROM debian:buster-slim
