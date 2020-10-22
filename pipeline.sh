@@ -14,6 +14,7 @@ readonly BUILD_SOURCES_DIRECTORY=${2:-${PWD}}
 
 build_container_image() {
     echo "Building container image..."
+    ls
     docker build -t ${IMAGE_NAME} -f Dockerfile .
 }
 
