@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eks-version-exporter
+  namespace: $(kubernetes-namespace)
+  labels:
+    project: selfservice
+    department: devex
+    app: eks-version-exporter
+    component: eks-version-exporter
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eks-version-exporter
+  template:
+    metadata:
+      labels:
+        app: eks-version-exporter
+        project: selfservice
+        department: devex
+    spec:
+      priorityClassName: selfservice
+      containers:
+        - name: eks-version-exporter
+          image: 579478677147.dkr.ecr.eu-central-1.amazonaws.com/ded/eks-version-exporter:$(Build.BuildId)
+          ports:
+            - containerPort: 8080
+              name: metrics
