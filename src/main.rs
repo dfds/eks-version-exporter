@@ -7,11 +7,11 @@ use crate::model::github_rss::GithubFeedResponse;
 mod model;
 
 fn main() {
-    let latest_k8s_version = get_latest_k8s_version().expect("Unable to get k8s_releases");
+    let mut latest_k8s_version = get_latest_k8s_version().expect("Unable to get k8s_releases");
     let mut eol_k8s_version = latest_k8s_version.clone();
     eol_k8s_version.minor = eol_k8s_version.minor - 2;
-    let server_ver = get_server_k8s_version();
-    let latest_eks_version = get_latest_eks_k8s_version();
+    let mut server_ver = get_server_k8s_version();
+    let mut latest_eks_version = get_latest_eks_k8s_version();
     println!("server: {:?}", server_ver);
     println!("latest EKS: {:?}", latest_eks_version);
     println!("latest k8s release: {:?}", latest_k8s_version);
@@ -41,6 +41,13 @@ fn main() {
         req_recv.recv().unwrap();
 
         println!("Updating metrics");
+
+        latest_k8s_version = get_latest_k8s_version().expect("Unable to get k8s_releases");
+        eol_k8s_version = latest_k8s_version.clone();
+        eol_k8s_version.minor = eol_k8s_version.minor - 2;
+        server_ver = get_server_k8s_version();
+        latest_eks_version = get_latest_eks_k8s_version();
+
         prometheus_exporter::prometheus::unregister(Box::new(server_current_version));
 
         let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
