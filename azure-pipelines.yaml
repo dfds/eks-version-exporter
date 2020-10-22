@@ -19,7 +19,7 @@ variables:
 - name: 'vmImage'
   value: 'ubuntu-latest'
 - name: 'k8s-service-connection'
-  value: 'Kubernetes-Hellman-selfservice-ops'
+  value: 'Kubernetes-Hellman-ops-deploy'
 - name: 'kubernetes-namespace'
   value: 'monitoring'
 
