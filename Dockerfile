@@ -7,7 +7,13 @@ COPY ./Cargo.lock ./Cargo.lock
 RUN cargo build --release
 RUN rm src/*.rs
 
+RUN ls
+RUN ls src
+
 COPY ./ ./
+
+RUN ls
+RUN ls src
 
 RUN cargo build --release --locked --offline
 
