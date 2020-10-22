@@ -23,19 +23,7 @@ fn main() {
         println!("Server version {} is outdated", server_ver.to_string());
     }
 
-
-    let gauge = prometheus_exporter::prometheus::Gauge::new("eks_version_exporter_server_current_version", "Contains a semver compatible value").expect("Unable to create gauge");
-
-    let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
-    opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
-    opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
-    opts = opts.const_label("k8s_latest_available_version", latest_k8s_version.to_string().as_str());
-    opts = opts.const_label("eol_latest_available_version", eol_k8s_version.to_string().as_str());
-    opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
-    opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
-    let mut server_current_version = register_gauge!(opts).expect("Unable to register gauge");
-
-    let server_current_version_vec = register_gauge_vec!("eks_version_exporter_vec", "Bunch of values", &["server_current_version", "eks_latest_available_version", "k8s_latest_available_version", "eol_latest_available_version", "last_updated", "last_updated_text"]).expect("Unable to create gauge vec");
+    let server_current_version_vec = register_gauge_vec!("eks_version_exporter", "Bunch of values", &["server_current_version", "eks_latest_available_version", "k8s_latest_available_version", "eol_latest_available_version", "last_updated", "last_updated_text"]).expect("Unable to create gauge vec");
     server_current_version_vec.with_label_values(&[
         server_ver.to_string().as_str(),
         latest_eks_version.to_string().as_str(),
@@ -47,7 +35,7 @@ fn main() {
 
     let addr_raw = "0.0.0.0:8080";
     let addr : SocketAddr = addr_raw.parse().expect("Invalid SocketAddr");
-    let (req_recv, fin_send) = prometheus_exporter::PrometheusExporter::run_and_repeat(addr, std::time::Duration::from_secs(60));
+    let (req_recv, fin_send) = prometheus_exporter::PrometheusExporter::run_and_repeat(addr, std::time::Duration::from_secs(1800));
 
     loop {
         req_recv.recv().unwrap();
@@ -60,8 +48,6 @@ fn main() {
         server_ver = get_server_k8s_version();
         latest_eks_version = get_latest_eks_k8s_version();
 
-        prometheus_exporter::prometheus::unregister(Box::new(server_current_version));
-
         server_current_version_vec.reset();
 
         server_current_version_vec.with_label_values(&[
@@ -71,15 +57,6 @@ fn main() {
             eol_k8s_version.to_string().as_str(),
             current_time_epoch().to_string().as_str(),
             current_time_date_string().as_str()]);
-
-        let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
-        opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
-        opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
-        opts = opts.const_label("k8s_latest_available_version", latest_k8s_version.to_string().as_str());
-        opts = opts.const_label("eol_latest_available_version", eol_k8s_version.to_string().as_str());
-        opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
-        opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
-        server_current_version = register_gauge!(opts).expect("Unable to register gauge");
 
         fin_send.send(prometheus_exporter::FinishedUpdate).unwrap();
     }
