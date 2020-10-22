@@ -46,3 +46,20 @@ pub struct Item {
     pub title : String,
     pub link : String
 }
+
+pub mod github_rss {
+    use serde::{Serialize, Deserialize};
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct GithubFeedResponse {
+        pub updated : String,
+
+        #[serde(rename = "entry", default)]
+        pub entrys : Vec<Entry>
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Entry {
+        pub title : String,
+    }
+}

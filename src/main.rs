@@ -2,14 +2,20 @@ use std::process::Command;
 use crate::model::{KubectlVersionResponse, AWSRssFeedResponse, Item};
 use std::net::SocketAddr;
 use prometheus_exporter::prometheus::{register_gauge, Opts};
+use crate::model::github_rss::GithubFeedResponse;
 
 mod model;
 
 fn main() {
+    let latest_k8s_version = get_latest_k8s_version().expect("Unable to get k8s_releases");
+    let mut eol_k8s_version = latest_k8s_version.clone();
+    eol_k8s_version.minor = eol_k8s_version.minor - 2;
     let server_ver = get_server_k8s_version();
     let latest_eks_version = get_latest_eks_k8s_version();
     println!("server: {:?}", server_ver);
     println!("latest EKS: {:?}", latest_eks_version);
+    println!("latest k8s release: {:?}", latest_k8s_version);
+    println!("oldest k8s release supported: {:?}", eol_k8s_version);
 
     if latest_eks_version > server_ver {
         println!("Server version {} is outdated", server_ver.to_string());
@@ -21,6 +27,8 @@ fn main() {
     let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
     opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
     opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
+    opts = opts.const_label("k8s_latest_available_version", latest_k8s_version.to_string().as_str());
+    opts = opts.const_label("eol_latest_available_version", eol_k8s_version.to_string().as_str());
     opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
     opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
     let mut server_current_version = register_gauge!(opts).expect("Unable to register gauge");
@@ -38,6 +46,8 @@ fn main() {
         let mut opts = Opts::new("eks_version_exporter", "Bunch of values");
         opts = opts.const_label("server_current_version", server_ver.to_string().as_str());
         opts = opts.const_label("eks_latest_available_version", latest_eks_version.to_string().as_str());
+        opts = opts.const_label("k8s_latest_available_version", latest_k8s_version.to_string().as_str());
+        opts = opts.const_label("eol_latest_available_version", eol_k8s_version.to_string().as_str());
         opts = opts.const_label("last_updated", current_time_epoch().to_string().as_str());
         opts = opts.const_label("last_updated_text", current_time_date_string().as_str());
         server_current_version = register_gauge!(opts).expect("Unable to register gauge");
@@ -120,5 +130,39 @@ fn get_aws_k8s_versions() -> Result<AWSRssFeedResponse, ()> {
     return match serde_xml_rs::from_str(&resp_text) {
         Ok(val) => Ok(val),
         Err(_) => Err(())
+    }
+}
+
+fn get_k8s_releases() -> Result<GithubFeedResponse, ()> {
+    let resp = reqwest::blocking::get("https://github.com/kubernetes/kubernetes/releases.atom").expect("Unable to get RSS response from AWS");
+    let resp_text = resp.text().expect("Unable to convert HTTP response to text");
+
+    return match serde_xml_rs::from_str(&resp_text) {
+        Ok(val) => Ok(val),
+        Err(_) => Err(())
+    }
+}
+
+fn get_latest_k8s_version() -> Option<semver::Version> {
+    let k8s_releases = get_k8s_releases().expect("Unable to get k8s_releases");
+    let mut releases = Vec::new();
+    for release in &k8s_releases.entrys {
+        let modified = release.title.chars().next().map(|c| &release.title[c.len_utf8()..]).expect("Unable to remove first character");
+        let version = semver::Version::parse(modified).expect("Unable to parse version");
+        releases.push(version);
+    }
+
+    releases = releases
+        .into_iter()
+        .filter(|release| {
+            return release.pre.is_empty();
+        })
+        .collect::<Vec<semver::Version>>();
+
+    releases.sort_by_key(|x| x.minor);
+
+    match releases.last() {
+        Some(v) => Some(v.clone()),
+        None => None
     }
 }
