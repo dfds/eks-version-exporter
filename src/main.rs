@@ -35,7 +35,7 @@ fn main() {
 
     let addr_raw = "0.0.0.0:8080";
     let addr : SocketAddr = addr_raw.parse().expect("Invalid SocketAddr");
-    let (req_recv, fin_send) = prometheus_exporter::PrometheusExporter::run_and_repeat(addr, std::time::Duration::from_secs(60));
+    let (req_recv, fin_send) = prometheus_exporter::PrometheusExporter::run_and_repeat(addr, std::time::Duration::from_secs(1800));
 
     loop {
         req_recv.recv().unwrap();
