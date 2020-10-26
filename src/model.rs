@@ -9,7 +9,8 @@ pub struct State {
     pub eol_k8s_version : semver::Version,
     pub current_time : String,
     pub current_time_date_string : String,
-    pub is_outdated : i64
+    pub is_outdated : f64,
+    pub is_past_eol: f64
 }
 
 impl State {
@@ -45,7 +46,8 @@ impl State {
             },
             current_time: "".to_string(),
             current_time_date_string: "".to_string(),
-            is_outdated: 0
+            is_outdated: 0.0,
+            is_past_eol: 0.0
         };
 
         state.refresh();
@@ -65,9 +67,15 @@ impl State {
         self.current_time_date_string =  current_time_date_string();
 
         if self.latest_eks_version > self.server_ver {
-            self.is_outdated = 1;
+            self.is_outdated = 1.0;
         } else {
-            self.is_outdated = 0;
+            self.is_outdated = 0.0;
+        }
+
+        if self.eol_k8s_version > self.server_ver {
+            self.is_past_eol = 1.0;
+        } else {
+            self.is_past_eol = 0.0;
         }
     }
 }
@@ -187,7 +195,7 @@ pub fn get_server_k8s_version() -> semver::Version {
 
     let server_ver_raw = versions.server_version.as_ref().expect("No server version").git_version.as_ref().expect("No git version key");
     let server_ver_modified : &str = server_ver_raw.chars().next().map(|c| &server_ver_raw[c.len_utf8()..]).expect("Unable to remove first character");
-    let mut server_ver = semver::Version::parse(server_ver_modified).expect("Unable to parse git version into Version");
+    let server_ver = semver::Version::parse(server_ver_modified).expect("Unable to parse git version into Version");
     semver::Version::parse(format!("{}.{}.0", server_ver.major, server_ver.minor).as_str()).expect("Unable to parse git version into Version")
 }
 

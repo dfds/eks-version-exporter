@@ -1,6 +1,6 @@
-use crate::model::{KubectlVersionResponse, AWSRssFeedResponse, Item, State};
+use crate::model::{State};
 use std::net::SocketAddr;
-use prometheus_exporter::prometheus::{register_gauge, Opts, register_gauge_vec, GaugeVec};
+use prometheus_exporter::prometheus::{register_gauge, register_gauge_vec};
 
 extern crate prometheus_exporter;
 
@@ -17,15 +17,20 @@ fn main() {
         println!("Server version {} is outdated", state.server_ver.to_string());
     }
 
-    let server_current_version_vec = register_gauge_vec!("eks_version_exporter", "Bunch of values", &["server_current_version", "eks_latest_available_version", "k8s_latest_available_version", "eol_latest_available_version", "last_updated", "last_updated_text", "is_outdated"]).expect("Unable to create gauge vec");
+    let server_current_version_vec = register_gauge_vec!("eks_version_exporter", "Bunch of values", &["server_current_version", "eks_latest_available_version", "k8s_latest_available_version", "eol_latest_available_version", "last_updated", "last_updated_text"]).expect("Unable to create gauge vec");
     server_current_version_vec.with_label_values(&[
         state.server_ver.to_string().as_str(),
         state.latest_eks_version.to_string().as_str(),
         state.latest_k8s_version.to_string().as_str(),
         state.eol_k8s_version.to_string().as_str(),
         &state.current_time,
-        &state.current_time_date_string,
-        state.is_outdated.to_string().as_str()]);
+        &state.current_time_date_string]);
+
+    let is_outdated_gauge = register_gauge!("eks_version_exporter_is_outdated", "If value is 1 then cluster version is outdated").expect("Unable to create gauge");
+    is_outdated_gauge.set(state.is_outdated);
+
+    let is_past_eol_gauge = register_gauge!("eks_version_exporter_is_past_eol", "If value is 1 then cluster version is older than EOL").expect("Unable to create gauge");
+    is_past_eol_gauge.set(state.is_past_eol);
 
 
     let addr_raw = "0.0.0.0:8080";
@@ -51,8 +56,10 @@ fn main() {
             state.latest_k8s_version.to_string().as_str(),
             state.eol_k8s_version.to_string().as_str(),
             &state.current_time,
-            &state.current_time_date_string,
-            state.is_outdated.to_string().as_str()]);
+            &state.current_time_date_string]);
+
+        is_outdated_gauge.set(state.is_outdated);
+        is_past_eol_gauge.set(state.is_past_eol);
 
         fin_send.send(prometheus_exporter::FinishedUpdate).unwrap();
     }
