@@ -76,7 +76,7 @@ impl State {
         }
 
         // 1.17.4 > 1.17.0
-        if self.eol_k8s_version >= self.server_ver {
+        if self.eol_k8s_version > self.server_ver {
             info!(target: "eks_version_exporter", "Server is EOL: {} >= {}", self.eol_k8s_version, self.server_ver);
             self.is_past_eol = 1.0;
         } else {
