@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 use github_rss::GithubFeedResponse;
 use std::process::Command;
 use log::{info};
+use std::error::Error;
 
 pub struct State {
     pub server_ver : semver::Version,
@@ -120,8 +121,6 @@ pub struct AWSRssFeedResponse {
 #[derive(Debug, Deserialize)]
 pub struct Channel {
     pub title : String,
-    #[serde(rename = "lastBuildDate")]
-    pub last_build_date : String,
 
     #[serde(rename = "item", default)]
     pub items: Vec<Item>
@@ -174,7 +173,8 @@ pub fn current_time_date_string() -> String {
 }
 
 fn get_latest_eks_k8s_version() -> semver::Version {
-    let res = get_aws_k8s_versions().expect("Unable to get response from AWS");
+    let res = get_aws_k8s_versions().unwrap();
+
     let version_items : Vec<Item> = res.channel.items
         .clone()
         .into_iter()
@@ -219,13 +219,24 @@ pub fn get_k8s_version() -> Result<KubectlVersionResponse, ()> {
     };
 }
 
-fn get_aws_k8s_versions() -> Result<AWSRssFeedResponse, ()> {
-    let resp = reqwest::blocking::get("https://docs.aws.amazon.com/eks/latest/userguide/doc-history.rss").expect("Unable to get RSS response from AWS");
-    let resp_text = resp.text().expect("Unable to convert HTTP response to text");
+fn get_aws_k8s_versions() -> Result<AWSRssFeedResponse, Box<dyn Error>> {
+    let resp = match reqwest::blocking::get("https://docs.aws.amazon.com/eks/latest/userguide/doc-history.rss") {
+        Ok(val) => val,
+        Err(err) => {
+            return Err(Box::new(err));
+        }
+    };
+    
+    let resp_text = match resp.text() {
+        Ok(val) => val,
+        Err(err) => {
+            return Err(Box::new(err));
+        }
+    };
 
     return match serde_xml_rs::from_str(&resp_text) {
         Ok(val) => Ok(val),
-        Err(_) => Err(())
+        Err(err) => Err(Box::new(err))
     }
 }
 
