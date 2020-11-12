@@ -62,22 +62,22 @@ impl State {
         self.eol_k8s_version =  {
             let mut x = self.latest_k8s_version.clone();
             x.minor = x.minor - 2;
+            x.patch = 0;
             x
         };
         self.current_time =  current_time_epoch().to_string();
         self.current_time_date_string =  current_time_date_string();
 
-        info!("Is outdated check");
         if self.latest_eks_version > self.server_ver {
-            info!("Is outdated true: {} > {}", self.latest_eks_version, self.server_ver);
+            info!(target: "eks_version_exporter", "Server is outdated: {} > {}", self.latest_eks_version, self.server_ver);
             self.is_outdated = 1.0;
         } else {
             self.is_outdated = 0.0;
         }
 
-        info!("EOL check");
-        if self.eol_k8s_version <= self.server_ver {
-            info!("EOL true: {} >= {}", self.eol_k8s_version, self.server_ver);
+        // 1.17.4 > 1.17.0
+        if self.eol_k8s_version >= self.server_ver {
+            info!(target: "eks_version_exporter", "Server is EOL: {} >= {}", self.eol_k8s_version, self.server_ver);
             self.is_past_eol = 1.0;
         } else {
             self.is_past_eol = 0.0;

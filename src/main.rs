@@ -50,12 +50,6 @@ fn main() {
         info!("latest k8s release: {:?}", state.latest_k8s_version);
         info!("oldest k8s release supported: {:?}", state.eol_k8s_version);
 
-
-        if state.latest_eks_version > state.server_ver {
-            info!("Server version {} is outdated", state.server_ver.to_string());
-        }
-
-
         server_current_version_vec.reset();
 
         server_current_version_vec.with_label_values(&[
