@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use github_rss::GithubFeedResponse;
 use std::process::Command;
+use log::{info};
 
 pub struct State {
     pub server_ver : semver::Version,
@@ -66,13 +67,17 @@ impl State {
         self.current_time =  current_time_epoch().to_string();
         self.current_time_date_string =  current_time_date_string();
 
+        info!("Is outdated check");
         if self.latest_eks_version > self.server_ver {
+            info!("Is outdated true: {} > {}", self.latest_eks_version, self.server_ver);
             self.is_outdated = 1.0;
         } else {
             self.is_outdated = 0.0;
         }
 
-        if self.eol_k8s_version > self.server_ver {
+        info!("EOL check");
+        if self.eol_k8s_version <= self.server_ver {
+            info!("EOL true: {} >= {}", self.eol_k8s_version, self.server_ver);
             self.is_past_eol = 1.0;
         } else {
             self.is_past_eol = 0.0;
