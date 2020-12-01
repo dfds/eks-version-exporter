@@ -146,6 +146,7 @@ pub mod github_rss {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Entry {
         pub title : String,
+        pub id : String
     }
 }
 
@@ -254,7 +255,10 @@ fn get_latest_k8s_version() -> Option<semver::Version> {
     let k8s_releases = get_k8s_releases().expect("Unable to get k8s_releases");
     let mut releases = Vec::new();
     for release in &k8s_releases.entrys {
-        let modified = release.title.chars().next().map(|c| &release.title[c.len_utf8()..]).expect("Unable to remove first character");
+        let tag = release.id.clone();
+        let version_from_tag = tag.split('/').last().expect("Unable to split tag by char '/'. RSS feed structure must've changed");
+
+        let modified = version_from_tag.chars().next().map(|c| &version_from_tag[c.len_utf8()..]).expect("Unable to remove first character");
         let version = semver::Version::parse(modified).expect("Unable to parse version");
         releases.push(version);
     }
