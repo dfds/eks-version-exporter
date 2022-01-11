@@ -3,6 +3,8 @@ use github_rss::GithubFeedResponse;
 use std::process::Command;
 use log::{info};
 use std::error::Error;
+use reqwest::header::HeaderValue;
+use reqwest::Url;
 
 pub struct State {
     pub server_ver : semver::Version,
@@ -221,7 +223,12 @@ pub fn get_k8s_version() -> Result<KubectlVersionResponse, ()> {
 }
 
 fn get_aws_k8s_versions() -> Result<AWSRssFeedResponse, Box<dyn Error>> {
-    let resp = match reqwest::blocking::get("https://docs.aws.amazon.com/eks/latest/userguide/doc-history.rss") {
+    let client = reqwest::blocking::Client::new();
+
+    let mut req = reqwest::blocking::Request::new(reqwest::Method::GET, Url::parse("https://docs.aws.amazon.com/eks/latest/userguide/doc-history.rss").unwrap());
+    req.headers_mut().insert("User-Agent", HeaderValue::from_str("curl/7.77.0").unwrap()); // CloudFront in front of the RSS feed does some user-agent checking now
+
+    let resp = match client.execute(req) {
         Ok(val) => val,
         Err(err) => {
             return Err(Box::new(err));
