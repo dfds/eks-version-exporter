@@ -1,4 +1,4 @@
-FROM rust:1.47 as builder
+FROM rust:1.67 as builder
 
 RUN USER=root cargo new --bin deps-caching
 WORKDIR ./deps-caching
