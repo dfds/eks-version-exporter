@@ -3,6 +3,7 @@ use github_rss::GithubFeedResponse;
 use std::process::Command;
 use log::{info};
 use std::error::Error;
+use regex::Regex;
 use reqwest::header::HeaderValue;
 use reqwest::Url;
 
@@ -176,13 +177,15 @@ pub fn current_time_date_string() -> String {
 }
 
 fn get_latest_eks_k8s_version() -> semver::Version {
+    use regex::Regex;
     let res = get_aws_k8s_versions().unwrap();
+    let re = Regex::new(r"(Kubernetes version \d+.[0-9]+)").unwrap();
 
     let version_items : Vec<Item> = res.channel.items
         .clone()
         .into_iter()
         .filter(|item| {
-            item.title.contains("Kubernetes version")
+            re.is_match(&item.title)
         })
         .collect();
 
