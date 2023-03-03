@@ -187,6 +187,11 @@ fn get_latest_eks_k8s_version() -> semver::Version {
         .filter(|item| {
             re.is_match(&item.title)
         })
+        .map(|mut item| {
+            let caps = re.captures(&item.title).unwrap();
+            item.title = caps.get(1).unwrap().as_str().to_owned();
+            item
+        })
         .collect();
 
     let item = version_items[0].clone();
