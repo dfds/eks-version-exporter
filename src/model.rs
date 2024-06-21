@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use github_rss::GithubFeedResponse;
 use std::process::Command;
-use log::{info};
+use log::{debug, info};
 use std::error::Error;
 use regex::Regex;
 use reqwest::header::HeaderValue;
@@ -194,16 +194,28 @@ fn get_latest_eks_k8s_version() -> semver::Version {
         })
         .collect();
 
-    let item = version_items[0].clone();
-    let last = item.title.split(' ').last().expect("");
-    let mut modified : String = "".to_owned();
-    if last.split('.').collect::<Vec<&str>>().len() >= 2 {
-        modified = format!("{}.0", last);
-    } else {
-        modified = last.to_owned();
+    let mut parsed_versions = Vec::new();
+    for i in &version_items {
+        let item = i.clone();
+        let last = item.title.split(' ').last().expect("");
+        let mut modified : String = "".to_owned();
+        if last.split('.').collect::<Vec<&str>>().len() >= 2 {
+            modified = format!("{}.0", last);
+        } else {
+            modified = last.to_owned();
+        }
+        match semver::Version::parse(&modified) {
+            Ok(ver) => parsed_versions.push(ver),
+            Err(err) => {
+                debug!("Unable to parse item title into Version, skipping");
+                debug!("{}", err);
+            }
+        }
     }
 
-    semver::Version::parse(&modified).expect("Unable to parse item title into Version")
+    parsed_versions.sort_by_key(|x| x.minor);
+
+   parsed_versions.last().unwrap().clone()
 }
 
 pub fn get_server_k8s_version() -> semver::Version {
