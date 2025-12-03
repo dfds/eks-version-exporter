@@ -10,15 +10,16 @@ metadata:
     component: eks-version-exporter
 spec:
   endpoints:
-  - path: /metrics
-    port: metrics
-    metricRelabelings:
-      - action: keep
-        sourceLabels: [__name__]
-        regex: 'eks_version_exporter|eks_version_exporter_is_outdated|eks_version_exporter_is_past_eol'
+    - path: /metrics
+      port: metrics
+      metricRelabelings:
+        - action: keep
+          sourceLabels: [__name__]
+          regex: "eks_version_exporter|eks_version_exporter_is_outdated|eks_version_exporter_is_past_eol"
+          scrapeInterval: 3600s # we don't need the resolution more often than daily, so could go higher
   namespaceSelector:
     matchNames:
-    - $(kubernetes-namespace)
+      - $(kubernetes-namespace)
   selector:
     matchLabels:
       app: eks-version-exporter
