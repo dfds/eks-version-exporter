@@ -16,7 +16,7 @@ spec:
         - action: keep
           sourceLabels: [__name__]
           regex: "eks_version_exporter|eks_version_exporter_is_outdated|eks_version_exporter_is_past_eol"
-          scrapeInterval: 3600s # we don't need the resolution more often than daily, so could go higher
+      interval: 3600s # we don't need the resolution more often than daily, so could go higher
   namespaceSelector:
     matchNames:
       - $(kubernetes-namespace)
