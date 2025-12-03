@@ -3,14 +3,11 @@ kind: Service
 metadata:
   name: eks-version-exporter
   namespace: $(kubernetes-namespace)
-  annotations:
-    prometheus.io/scrape: 'true'
   labels:
     app: eks-version-exporter
     project: selfservice
-    department: devex
+    department: cloudengineering
     component: eks-version-exporter
-    scrape-service-metrics: "true"
 spec:
   ports:
     - name: metrics

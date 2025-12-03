@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: eks-version-exporter
+  namespace: $(kubernetes-namespace)
+  labels:
+    app: eks-version-exporter
+    project: selfservice
+    department: cloudengineering
+    component: eks-version-exporter
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    metricRelabelings:
+      - action: keep
+        sourceLabels: [__name__]
+        regex: 'eks_version_exporter|eks_version_exporter_is_outdated|eks_version_exporter_is_past_eol'
+  namespaceSelector:
+    matchNames:
+    - $(kubernetes-namespace)
+  selector:
+    matchLabels:
+      app: eks-version-exporter
