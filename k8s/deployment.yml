@@ -5,7 +5,7 @@ metadata:
   namespace: $(kubernetes-namespace)
   labels:
     project: selfservice
-    department: devex
+    department: cloudengineering
     app: eks-version-exporter
     component: eks-version-exporter
 spec:
@@ -18,7 +18,7 @@ spec:
       labels:
         app: eks-version-exporter
         project: selfservice
-        department: devex
+        department: cloudengineering
     spec:
       containers:
         - name: eks-version-exporter
