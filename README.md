@@ -11,18 +11,18 @@ eks_version_exporter{eks_latest_available_version="1.18.0",last_updated="1603289
 
 ## Helm
 
-The repository includes a Helm chart at `charts/eks-version-exporter`.
+The repository includes a Helm chart at `chart/eks-version-exporter`.
 
 Render manifests locally:
 
 ```bash
-helm template eks-version-exporter charts/eks-version-exporter
+helm template eks-version-exporter chart/eks-version-exporter
 ```
 
 Install or upgrade in a namespace:
 
 ```bash
-helm upgrade --install eks-version-exporter charts/eks-version-exporter \
+helm upgrade --install eks-version-exporter chart/eks-version-exporter \
 	--namespace <namespace> \
 	--create-namespace
 ```
@@ -30,7 +30,7 @@ helm upgrade --install eks-version-exporter charts/eks-version-exporter \
 Override image tag at deploy time:
 
 ```bash
-helm upgrade --install eks-version-exporter charts/eks-version-exporter \
+helm upgrade --install eks-version-exporter chart/eks-version-exporter \
 	--namespace <namespace> \
 	--set image.tag=<tag>
 ```
