@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ include "eks-version-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eks-version-exporter.labels" . | nindent 4 }}
 spec:

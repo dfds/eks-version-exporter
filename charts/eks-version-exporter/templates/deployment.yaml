@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "eks-version-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eks-version-exporter.labels" . | nindent 4 }}
 spec:
@@ -24,14 +25,21 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
       containers:
         - name: {{ include "eks-version-exporter.name" . }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           ports:
             - name: {{ .Values.service.name }}
               containerPort: {{ .Values.service.port }}
-              protocol: TCP
+              {{- with .Values.service.protocol }}
+              protocol: {{ . | quote }}
+              {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
