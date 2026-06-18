@@ -9,6 +9,7 @@ on:
       - Cargo.toml
       - Cargo.lock
       - Dockerfile
+      - dummy.txt
 
 permissions:
   contents: write
