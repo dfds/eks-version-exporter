@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - README.md
-      - LICENSE
+    paths:
+      - src/**
+      - Cargo.toml
+      - Cargo.lock
+      - Dockerfile
 
 permissions:
   contents: write
@@ -45,24 +47,24 @@ jobs:
           docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Update Helm chart image tag
+      - name: Update Helm chart appVersion
         run: |
           set -euo pipefail
-          sed -i -E "s|^  tag: .*|  tag: \"${GITHUB_RUN_NUMBER}\"|" chart/values.yaml
+          sed -i -E "s|^appVersion: .*|appVersion: \"${GITHUB_RUN_NUMBER}\"|" chart/Chart.yaml
 
-      - name: Commit image tag update to master
+      - name: Commit chart appVersion update to master
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add chart/values.yaml
+          git add chart/Chart.yaml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          git commit -m "chore(ci): update image.tag to ${GITHUB_RUN_NUMBER} [skip ci]"
+          git commit -m "chore(ci): update chart appVersion to ${GITHUB_RUN_NUMBER} [skip ci]"
           git push origin HEAD:master
 
       # - name: Upload manifests artifact
