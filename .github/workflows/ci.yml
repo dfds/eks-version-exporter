@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - README.md
+      - LICENSE
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    env:
+      AWS_DEFAULT_REGION: eu-central-1
+      IMAGE_NAME: eks-version-exporter
+      ECR_REPOSITORY: ded/eks-version-exporter
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag and push image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          docker build -t "$IMAGE_NAME" -f Dockerfile .
+          docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      # - name: Upload manifests artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: manifests
+      #     path: k8s

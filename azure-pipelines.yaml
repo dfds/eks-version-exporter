@@ -1,14 +1,15 @@
 name: $(Build.BuildId)
 
 # Triggers Pipeline only on Master
-trigger:
-  branches:
-    include:
-    - master
-  paths:
-    exclude:
-    - README.md
-    - LICENSE
+# trigger:
+#   branches:
+#     include:
+#     - master
+#   paths:
+#     exclude:
+#     - README.md
+#     - LICENSE
+trigger: none
 
 # Disables triggering Pipeline run at creation of every Pull Request
 pr: none
@@ -31,7 +32,7 @@ stages:
   jobs:
   # Build jobs
   - job: Build
-    pool: 
+    pool:
       vmImage: $(vmImage)
 
     steps:
@@ -43,29 +44,29 @@ stages:
         ./pipeline.sh $(Build.BuildId) $(System.DefaultWorkingDirectory)
       displayName: Pipeline Bash Script
       env:
-        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)   
+        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
 
     - task: PublishBuildArtifacts@1
       displayName: "Publish Artifact: manifests"
       inputs:
         PathtoPublish: k8s
         ArtifactName: manifests
-        
+
 # Continuous Deployment steps
 - stage: CD
   displayName: 'Continuous Deployment'
   dependsOn: CI
   # Run CD only if CI succeeds and if pipeline runs from Master branch
-  condition: and(succeeded('CI'), eq(variables['Build.SourceBranch'], 'refs/heads/master')) 
+  condition: and(succeeded('CI'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
   jobs:
   - deployment: K8s
     displayName: 'Deploy to Kubernetes'
-    pool: 
+    pool:
       vmImage: $(vmImage)
     environment: 'Hellman'
 
-    strategy: 
+    strategy:
       runOnce:
         deploy:
           steps:
@@ -73,7 +74,7 @@ stages:
           - download: current
             artifact: manifests
             displayName: 'Download Artifact: manifests'
-          
+
           # Replace token values in yaml files with pipeline variables
           - task: qetza.replacetokens.replacetokens-task.replacetokens@3
             displayName: 'Replace tokens in yaml files'
@@ -82,7 +83,7 @@ stages:
               targetFiles: '*.yml'
               tokenPrefix: '$('
               tokenSuffix: ')'
-          
+
           # Upload the modified Kubernetes manifests to current Pipeline for easy debugging
           - publish: $(Pipeline.Workspace)/manifests/
             artifact: deployed-manifests
