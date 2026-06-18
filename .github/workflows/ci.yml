@@ -8,6 +8,9 @@ on:
       - README.md
       - LICENSE
 
+permissions:
+  contents: write
+
 jobs:
   build-and-push:
     name: Build and Push
@@ -41,6 +44,26 @@ jobs:
           docker build -t "$IMAGE_NAME" -f Dockerfile .
           docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Update Helm chart image tag
+        run: |
+          set -euo pipefail
+          sed -i -E "s|^  tag: .*|  tag: \"${GITHUB_RUN_NUMBER}\"|" chart/values.yaml
+
+      - name: Commit image tag update to master
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add chart/values.yaml
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore(ci): update image.tag to ${GITHUB_RUN_NUMBER} [skip ci]"
+          git push origin HEAD:master
 
       # - name: Upload manifests artifact
       #   uses: actions/upload-artifact@v4
