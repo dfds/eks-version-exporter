@@ -1,3 +1,3 @@
 dummy text to test pipeline trigger on file changes. This file should not be deleted as it is used in the CI workflow to trigger builds when src, Cargo.toml, Cargo.lock, Dockerfile or this dummy.txt file is changed.
 
-test1
+test2
