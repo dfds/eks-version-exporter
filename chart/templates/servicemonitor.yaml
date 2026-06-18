@@ -1,0 +1,28 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "eks-version-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eks-version-exporter.labels" . | nindent 4 }}
+spec:
+  endpoints:
+    - path: {{ .Values.serviceMonitor.path }}
+      port: {{ .Values.service.name }}
+      interval: {{ .Values.serviceMonitor.interval }}
+      {{- with .Values.serviceMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      {{- if .Values.serviceMonitor.namespaceSelector.matchNames }}
+      {{- toYaml .Values.serviceMonitor.namespaceSelector.matchNames | nindent 6 }}
+      {{- else }}
+      - {{ .Release.Namespace }}
+      {{- end }}
+  selector:
+    matchLabels:
+      {{- include "eks-version-exporter.selectorLabels" . | nindent 6 }}
+{{- end }}

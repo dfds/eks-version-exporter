@@ -1,0 +1,6 @@
+apiVersion: v2
+name: eks-version-exporter
+description: Helm chart for eks-version-exporter
+type: application
+version: 0.1.0
+appVersion: "latest"
