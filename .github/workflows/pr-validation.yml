@@ -1,0 +1,30 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - README.md
+      - LICENSE
+
+jobs:
+  validate:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargo check
+        run: cargo check --all-targets
+
+      - name: Cargo test
+        run: cargo test --all-targets
+
+      - name: Build Docker image
+        run: docker build -t eks-version-exporter:pr -f Dockerfile .
