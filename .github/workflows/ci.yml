@@ -10,6 +10,7 @@ on:
       - Cargo.lock
       - Dockerfile
       - dummy.txt
+  workflow_dispatch:
 
 permissions:
   contents: write
