@@ -49,30 +49,25 @@ jobs:
           docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Update Helm chart metadata
+      - name: Update Flux deployment image tag
         run: |
           set -euo pipefail
-          sed -i -E "s|^appVersion: .*|appVersion: \"${GITHUB_RUN_NUMBER}\"|" chart/Chart.yaml
-          sed -i -E "s|^  tag: .*|  tag: \"${GITHUB_RUN_NUMBER}\"|" chart/values.yaml
-          current_version="$(awk '/^version:/ {gsub(/\"/, "", $2); print $2; exit}' chart/Chart.yaml)"
-          IFS='.' read -r major minor patch <<< "$current_version"
-          new_version="${major}.${minor}.$((patch + 1))"
-          sed -i -E "s|^version: .*|version: ${new_version}|" chart/Chart.yaml
-          echo "Updated appVersion and image tag to ${GITHUB_RUN_NUMBER}, and bumped chart version: ${current_version} -> ${new_version}"
+          sed -i -E "s|^([[:space:]]*image:[[:space:]]*).*$|\1${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:${GITHUB_RUN_NUMBER}|" k8s-flux/deployment.yaml
+          echo "Updated k8s-flux image tag to ${GITHUB_RUN_NUMBER}"
 
-      - name: Commit chart metadata update to master
+      - name: Commit Flux deployment update to master
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add chart/Chart.yaml chart/values.yaml
+          git add k8s-flux/deployment.yaml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          git commit -m "chore(ci): update chart metadata [skip ci]"
+          git commit -m "chore(ci): update flux deployment image [skip ci]"
           git push origin HEAD:master
 
       # - name: Upload manifests artifact
