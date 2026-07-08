@@ -55,7 +55,7 @@ jobs:
           sed -i -E "s|^([[:space:]]*image:[[:space:]]*).*$|\1${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:${GITHUB_RUN_NUMBER}|" k8s-flux/deployment.yaml
           echo "Updated k8s-flux image tag to ${GITHUB_RUN_NUMBER}"
 
-      - name: Commit Flux deployment update to master
+      - name: Commit Flux deployment update to current branch
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -68,7 +68,7 @@ jobs:
           fi
 
           git commit -m "chore(ci): update flux deployment image [skip ci]"
-          git push origin HEAD:master
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       # - name: Upload manifests artifact
       #   uses: actions/upload-artifact@v4
