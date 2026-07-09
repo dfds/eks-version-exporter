@@ -11,6 +11,8 @@ eks_version_exporter{eks_latest_available_version="1.18.0",last_updated="1603289
 
 ## Kubernetes Deployment
 
+This exporter is deployed through Flux from the `dfds/platform-apps` repository.
+
 Deploy with the manifests in `k8s-flux`:
 
 ```bash
