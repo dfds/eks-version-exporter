@@ -47,5 +47,6 @@ jobs:
           set -euo pipefail
           docker build -t "$IMAGE_NAME" -f Dockerfile .
           docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker tag "$IMAGE_NAME:latest" "$REGISTRY/$ECR_REPOSITORY:latest"
           docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_REPOSITORY:latest"
