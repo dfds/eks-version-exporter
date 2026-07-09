@@ -1,43 +1,45 @@
-FROM rust:1.67 as builder
+FROM golang:1.26.4-bookworm AS builder
+WORKDIR /src
 
-RUN USER=root cargo new --bin deps-caching
-WORKDIR ./deps-caching
-COPY ./Cargo.toml ./Cargo.toml
-COPY ./Cargo.lock ./Cargo.lock
-RUN cargo build --release
-RUN rm src/*.rs
+COPY src/go.mod src/go.sum ./
+RUN go mod download
 
-COPY . .
+COPY src/*.go ./
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/eks-version-exporter .
 
-RUN rm ./target/release/deps/eks_version_exporter*
-RUN cargo build --release --offline
+FROM debian:bookworm-slim AS kubectl
+ARG KUBECTL_VERSION=stable
 
-# App assembling
-FROM debian:bullseye-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    if [ "$KUBECTL_VERSION" = "stable" ]; then \
+      KUBECTL_VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"; \
+    fi; \
+    curl -fsSLo /kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"; \
+    chmod +x /kubectl
+
+FROM debian:bookworm-slim
 ARG APP=/usr/src/app
 
 RUN apt-get update \
-    && apt-get install -y ca-certificates tzdata curl \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
     && rm -rf /var/lib/apt/lists/*
-
-RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" \
-    && chmod +x ./kubectl \
-    && mv ./kubectl /usr/local/bin/kubectl
-
-EXPOSE 8080
 
 ENV TZ=Etc/UTC
 ENV APP_USER=dfds
 
-RUN groupadd $APP_USER \
-    && useradd -g $APP_USER $APP_USER \
-    && mkdir -p ${APP}
+RUN groupadd "$APP_USER" \
+    && useradd -g "$APP_USER" "$APP_USER" \
+    && mkdir -p "$APP"
 
-COPY --from=builder /deps-caching/target/release/eks-version-exporter ${APP}/eks-version-exporter
-
-RUN chown -R $APP_USER:$APP_USER ${APP}
+WORKDIR $APP
+COPY --from=kubectl /kubectl /usr/local/bin/kubectl
+COPY --chown=$APP_USER:$APP_USER --from=builder /out/eks-version-exporter ./eks-version-exporter
 
 USER $APP_USER
-WORKDIR ${APP}
 
+EXPOSE 8080
 CMD ["./eks-version-exporter"]

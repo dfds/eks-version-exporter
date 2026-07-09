@@ -6,10 +6,7 @@ on:
       - master
     paths:
       - src/**
-      - Cargo.toml
-      - Cargo.lock
       - Dockerfile
-      - dummy.txt
   workflow_dispatch:
 
 permissions:
