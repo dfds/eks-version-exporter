@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: eks-version-exporter
-  namespace: $(kubernetes-namespace)
+  namespace: monitoring
   labels:
     app: eks-version-exporter
     project: selfservice
@@ -19,7 +19,7 @@ spec:
       interval: 3600s # we don't need the resolution more often than daily, so could go higher
   namespaceSelector:
     matchNames:
-      - $(kubernetes-namespace)
+      - monitoring
   selector:
     matchLabels:
       app: eks-version-exporter
