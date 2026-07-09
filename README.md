@@ -13,10 +13,10 @@ eks_version_exporter{eks_latest_available_version="1.18.0",last_updated="1603289
 
 This exporter is deployed through Flux from the `dfds/platform-apps` repository.
 
-Deploy with the manifests in `k8s-flux`:
+Deploy with the manifests in `k8s`:
 
 ```bash
-kubectl apply -f k8s-flux/
+kubectl apply -f k8s/
 ```
 
-Update the image tag in `k8s-flux/deployment.yaml` before applying if you are deploying manually.
+Update the image tag in `k8s/deployment.yaml` before applying if you are deploying manually.
