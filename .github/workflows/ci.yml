@@ -69,9 +69,3 @@ jobs:
 
           git commit -m "chore(ci): update flux deployment image [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
-
-      # - name: Upload manifests artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: manifests
-      #     path: k8s
