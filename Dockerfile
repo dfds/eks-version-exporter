@@ -1,4 +1,4 @@
-FROM golang:1.26.4-bookworm AS builder
+FROM golang:1.26.4-trixie AS builder
 WORKDIR /src
 
 COPY src/go.mod src/go.sum ./
@@ -6,8 +6,7 @@ RUN go mod download
 
 COPY src/*.go ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /out/eks-version-exporter .
-
-FROM debian:bookworm-slim AS kubectl
+FROM debian:trixie-slim AS kubectl
 ARG KUBECTL_VERSION=stable
 
 RUN apt-get update \
@@ -21,7 +20,7 @@ RUN set -eux; \
     curl -fsSLo /kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"; \
     chmod +x /kubectl
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG APP=/usr/src/app
 
 RUN apt-get update \
